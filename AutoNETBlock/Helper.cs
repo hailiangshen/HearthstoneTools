@@ -34,6 +34,11 @@ namespace AutoNETBlock
             return CreateOutRule(NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_ANY, HearthstoneNETBlockRuleName, appPath, "炉石自动断线整活规则");
         }
 
+        public bool RemoveHearthstoneNETBlockRule()
+        {
+            return RemoveRule(HearthstoneNETBlockRuleName);
+        }
+
         public bool SetHearthstoneBlock(bool enabled)
         {
             return SetRuleBlock(HearthstoneNETBlockRuleName, enabled);
@@ -42,6 +47,16 @@ namespace AutoNETBlock
         public bool hasSetRule()
         {
             return GetRule(HearthstoneNETBlockRuleName) != null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>[DOMAIN, PRIVATE, PUBLIC]</returns>
+        public bool[] IsFireWallOpen()
+        {
+            INetFwPolicy2 policy2 = (INetFwPolicy2)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
+            return new bool[3] { policy2.FirewallEnabled[NET_FW_PROFILE_TYPE2_.NET_FW_PROFILE2_DOMAIN], policy2.FirewallEnabled[NET_FW_PROFILE_TYPE2_.NET_FW_PROFILE2_PRIVATE], policy2.FirewallEnabled[NET_FW_PROFILE_TYPE2_.NET_FW_PROFILE2_PUBLIC] };
         }
 
         /// <summary>
@@ -66,7 +81,7 @@ namespace AutoNETBlock
                 }
                 return true;
             }
-            throw new Exception("规则未找到，请先添加规则");
+            throw new Exception("防火墙规则未找到，请先添加规则");
         }
 
         private INetFwRule GetRule(string ruleName)
@@ -164,7 +179,7 @@ namespace AutoNETBlock
         /// 删除WindowsDefender防火墙规则
         /// <summary>
         /// <param name="ruleName"></param>
-        private bool DeleteRule(string ruleName)
+        private bool RemoveRule(string ruleName)
         {
             INetFwPolicy2 policy2 = (INetFwPolicy2)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
             try

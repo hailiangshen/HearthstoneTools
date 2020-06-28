@@ -23,19 +23,27 @@ namespace AutoNETBlock
         private const int WM_LBUTTONDOWN = 0x201;
         private const int VK_LBUTTON = 0x01;
 
+        private bool hasRule = false;
+        public bool HasRule 
+        { 
+            get { return hasRule; } 
+            set 
+            {
+                button1.Text = value ? "删除规则" : "添加规则";
+                hasRule = value; 
+            } 
+        }
+
         Helper helper = new Helper();
 
         public Form1()
         {
+            CheckFirewallState();
+
             InitializeComponent();
             this.Location = new Point(0, Screen.PrimaryScreen.WorkingArea.Height - this.Size.Height);
 
-            if(helper.hasSetRule())
-            {
-                button1.Visible = false;
-                button2.Size = new Size(270, button2.Size.Height);
-            }
-
+            HasRule = helper.hasSetRule();
         }
 
         protected bool isMouseEnter()
@@ -79,6 +87,19 @@ namespace AutoNETBlock
             }
         }
 
+        private void CheckFirewallState()
+        {
+            var state = helper.IsFireWallOpen();
+            if(state[0] && state[1] && state[2])
+            {
+                return;
+            }
+            var sb = new StringBuilder("防火墙未全部开启，可能导致本工具无法生效:\r\n");
+            if (!state[0]) sb.AppendLine("[域网络未开启]");
+            if (!state[1]) sb.AppendLine("[专用网络未开启]");
+            if (!state[2]) sb.AppendLine("[公用网络未开启]");
+            MessageBox.Show(sb.ToString(), "请检查防火墙状态", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
 
         private string GetHearthstonePath()
         {
@@ -92,6 +113,20 @@ namespace AutoNETBlock
 
         private void button1_Click(object sender, EventArgs e)
         {
+            if(HasRule)
+            {
+                try
+                {
+                    helper.RemoveHearthstoneNETBlockRule();
+                    HasRule = false;
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                return;
+            }
+
             var appPath = GetHearthstonePath();
             if(!string.IsNullOrEmpty(appPath))
             {
@@ -99,7 +134,8 @@ namespace AutoNETBlock
                 {
                     if(helper.CreateHearthstoneNETBlockRule(appPath))
                     {
-                        MessageBox.Show("规则添加成功");
+                        MessageBox.Show("防火墙规则添加成功", "成功");
+                        HasRule = true;
                     }
                 }
                 catch(Exception ex)
